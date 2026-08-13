@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- OGP Tags -->
+    <meta property="og:title" content="家アイコン診断" />
+    <meta property="og:description" content="あなたの家族はどんなカタチ？16種類の家アイコンで家族のスタイルを診断します！" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://houseicon-shindan.vercel.app/" />
+    <meta property="og:image" content="https://houseicon-shindan.vercel.app/logo.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>家アイコン診断</title>
+    <!-- 都会的でモダンなゴシック体（Noto Sans JPなど）に変更 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 多様性を表現するポップでビビッドなカラーパレット */
+            --bg-color: #f4f4f0;
+            --main-color: #111111;
+            --color-red: #E63946;
+            --color-blue: #457B9D;
+            --color-lightblue: #A8DADC;
+            --color-yellow: #FFF3B0;
+            --color-orange: #FF9F1C;
+            --color-green: #2A9D8F;
+            --color-pink: #F72585;
+            --white: #ffffff;
+            --font-pop: 'Noto Sans JP', "Hiragino Kaku Gothic ProN", "Helvetica Neue", "Arial", sans-serif;
+            --border-width: 3px;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: var(--font-pop);
+        }
+
+        body {
+            background-color: var(--white);
+            color: var(--main-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh;
+            /* モバイルブラウザのアドレスバー対策 */
+            overflow: hidden;
+            /* 全体はスクロールさせない */
+            position: relative;
+        }
+
+        /* 浮遊するカラフルな図形やアイコン装飾（白背景の奥） */
+        #bg-kamon-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 1;
+            /* 背景の図形がしっかり見えるように透明度を100%にする */
+        }
+
+        .bg-shape {
+            position: absolute;
+            animation: floatUp linear infinite;
+            /* 影（色付け用）だけを表示し、元の黒い画像を隠すハック */
+            overflow: hidden;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            opacity: 1;
+            /* JS側で設定した濃い色を反映させる */
+        }
+
+        .bg-shape img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* 元の画像を枠外に飛ばし、代わりの色付き影を枠内に落とす */
+            transform: translateY(-100%);
+            /* drop-shadowの色はJSで付与します */
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(110vh) rotate(0deg) scale(1);
+            }
+
+            50% {
+                transform: translateY(30vh) rotate(180deg) scale(1.2);
+            }
+
+            100% {
+                transform: translateY(-50vh) rotate(360deg) scale(1);
+                /* 画面上部から完全にフレームアウトさせる */
+            }
+        }
+
+        /* メインコンテナ - 枠なしで完全なフリーキャンバス */
+        #main-wrapper {
+            width: 100%;
+            max-width: 800px;
+            /* 少し横に広く余裕を持たせる */
+            height: 100vh;
+            height: 100dvh;
+            padding: 20px;
+            /* モバイルでは余白を少し詰める */
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: transparent;
+            /* 背景なし */
+        }
+
+        /* カスタムスクロールバー（目立たないように） */
+        #main-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #main-wrapper::-webkit-scrollbar-thumb {
+            background-color: rgba(17, 17, 17, 0.08);
+            /* 非常に薄く */
+            border-radius: 4px;
+        }
+
+        /* ロゴ画像 */
+        .logo-img {
+            max-width: 90%;
+            width: 240px;
+            /* タイトルロゴを少し小さく */
+            height: auto;
+            margin: 0 auto 30px;
+            /* 下の余白を大きくとる */
+            display: block;
+        }
+
+        /* キャッチコピー */
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--main-color);
+            margin-bottom: 40px;
+            letter-spacing: 0.15rem;
+            font-weight: 900;
+            display: inline-block;
+        }
+
+        /* ドデカいポップなボタン */
+        .btn-pop {
+            display: inline-block;
+            background-color: var(--white);
+            color: var(--main-color);
+            font-size: 1.2rem;
+            padding: 16px 40px;
+            border: var(--border-width) solid var(--main-color);
+            border-radius: 50px;
+            /* 角丸でモダンポップに */
+            cursor: pointer;
+            /* 少し離れた影でワクワク感を（カラフルな差し色を使用） */
+            box-shadow: 6px 6px 0 var(--color-pink);
+            transition: transform 0.1s, box-shadow 0.1s;
+            font-weight: 900;
+            letter-spacing: 0.15rem;
+            margin: 10px auto 0;
+            width: 100%;
+            max-width: 280px;
+            background-image: none;
+            /* リセット */
+            text-shadow: none;
+        }
+
+        .btn-pop:active {
+            transform: translate(6px, 6px);
+            box-shadow: 0px 0px 0 var(--color-pink);
+        }
+
+        .btn-pop.secondary {
+            box-shadow: 6px 6px 0 var(--color-lightblue);
+        }
+
+        .btn-pop.secondary:active {
+            box-shadow: 0px 0px 0 var(--color-lightblue);
+        }
+
+        .btn-pop.accent {
+            box-shadow: 6px 6px 0 var(--color-orange);
+        }
+
+        .btn-pop.accent:active {
+            box-shadow: 0px 0px 0 var(--color-orange);
+        }
+
+        /* クイズ画面 */
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            /* プログレスバーも長すぎないように制御 */
+            background-color: var(--white);
+            border: 2px solid var(--main-color);
+            border-radius: 20px;
+            height: 12px;
+            margin: 0 auto 40px auto;
+            /* 中央寄せし、下余白を大きく */
+            overflow: hidden;
+            box-shadow: none;
+            /* 枠線をシンプルに */
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--color-green);
+            width: 0%;
+            transition: width 0.4s ease;
+            position: relative;
+        }
+
+        /* プログレスバーのストライプ */
+        .progress-bar::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(-45deg, rgba(17, 17, 17, 0.1) 25%, transparent 25%, transparent 50%, rgba(17, 17, 17, 0.1) 50%, rgba(17, 17, 17, 0.1) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+            animation: moveStripes 1s linear infinite;
+        }
+
+        @keyframes moveStripes {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 20px 0;
+            }
+        }
+
+        /* 質問表示エリア */
+        #quiz-box {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            flex-grow: 1;
+            justify-content: center;
+            /* ど真ん中に配置 */
+            align-items: center;
+        }
+
+        .q-number {
+            font-size: 1rem;
+            color: var(--main-color);
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: 0.1rem;
+        }
+
+        .q-text {
+            font-size: 1.6rem;
+            margin-top: 10px;
+            margin-bottom: 50px;
+            /* 選択肢までの余白を広大に */
+            font-weight: 900;
+            color: var(--main-color);
+            line-height: 1.6;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        /* 画面いっぱいを使う2択ボタン（カラーブロック風） */
+        .options {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 380px;
+            /* 横幅を抑えてスタイリッシュに */
+            margin: 0 auto 20px auto;
+            /* 左右中央寄せ */
+            gap: 40px;
+            /* 選択肢同士の間隔を広げる */
+            flex-grow: 1;
+        }
+
+        .btn-option {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--white);
+            color: var(--main-color);
+            border: var(--border-width) solid var(--main-color);
+            /* アクセントカラーごとの影はJSでつけるか、シンプルな黒影にする */
+            box-shadow: 6px 6px 0 var(--color-lightblue);
+            font-size: 1.1rem;
+            padding: 20px;
+            border-radius: 50px;
+            /* 丸みでポップに */
+            width: 100%;
+            cursor: pointer;
+            font-weight: 900;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        /* ボタンごとに影の色を変える仕掛け（ポップな遊び心） */
+        .btn-option:nth-child(1) {
+            box-shadow: 6px 6px 0 var(--color-orange);
+        }
+
+        .btn-option:nth-child(2) {
+            box-shadow: 6px 6px 0 var(--color-green);
+        }
+
+        .btn-option:nth-child(1):active {
+            transform: translate(6px, 6px);
+            box-shadow: 0px 0px 0 var(--color-orange);
+        }
+
+        .btn-option:nth-child(2):active {
+            transform: translate(6px, 6px);
+            box-shadow: 0px 0px 0 var(--color-green);
+        }
+
+        /* ロード画面のモダンなスピナー（絵文字廃止） */
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(17, 17, 17, 0.1);
+            border-top-color: var(--color-pink);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 結果画面 */
+        .result-kamon-box {
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 30px;
+            background-color: transparent;
+            /* 背景なし */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        #res-img {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0) rotate(-20deg);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.1) rotate(10deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .res-name-pop {
+            font-size: 1.8rem;
+            color: var(--main-color);
+            margin-bottom: 20px;
+            display: inline-block;
+            font-weight: 900;
+            letter-spacing: 0.1rem;
+        }
+
+        .result-header h2 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            color: var(--color-pink);
+            font-weight: 700;
+        }
+
+        .res-desc-box {
+            background-color: rgba(255, 255, 255, 0.7);
+            /* 背景の家アイコンが濃いので、文字の視認性を上げるために半透明の白背景を追加 */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: left;
+            margin: 0 auto 40px auto;
+            line-height: 1.8;
+            color: var(--main-color);
+            font-size: 1.05rem;
+            font-weight: 700;
+            overflow-y: visible;
+            max-height: none;
+            max-width: 500px;
+            /* 横に広がりすぎないように */
+        }
+
+        .res-desc-box span,
+        .res-desc-box div {
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .res-desc-box strong {
+            color: var(--color-blue);
+            font-size: 1.1rem;
+            margin-right: 5px;
+            display: block;
+            /* 見出しのように扱う */
+            margin-bottom: 5px;
+        }
+
+        #screen-start,
+        #screen-quiz,
+        #screen-loading,
+        #screen-result {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            /* flex-startにして上寄せにしつつ大きく使う */
+            width: 100%;
+            padding-top: 20px;
+            padding-bottom: 40px;
+            /* 下部に余裕を持たせ、ボタンが消えないようにする */
+        }
+
+        #screen-quiz,
+        #screen-result {
+            height: auto;
+            /* 内容に応じて高さを可変にし、親のスクロールに任せる */
+            min-height: 100%;
+        }
+
+        #screen-start {
+            justify-content: center;
+            /* スタート画面は中央寄せのまま */
+        }
+
+        .hide {
+            display: none !important;
+        }
+
+        /* モバイル用の最終調整（さらにコンパクトに） */
+        @media (max-width: 600px) {
+            #main-wrapper {
+                padding: 15px 10px;
+            }
+
+            .logo-img {
+                width: 140px;
+                margin-bottom: 15px;
+            }
+
+            .subtitle {
+                font-size: 0.8rem;
+                margin-bottom: 25px;
+            }
+
+            .q-number {
+                font-size: 0.8rem;
+                margin-bottom: 10px;
+            }
+
+            .q-text {
+                font-size: 1.15rem;
+                margin-bottom: 25px;
+            }
+
+            .options {
+                gap: 15px;
+            }
+
+            .btn-option {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            .result-kamon-box {
+                width: 140px;
+                height: 140px;
+                margin-bottom: 10px;
+            }
+
+            #res-img {
+                width: 120px;
+                height: 120px;
+            }
+
+            .res-name-pop {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+
+            .res-desc-box {
+                padding: 15px;
+                font-size: 0.85rem;
+                margin-bottom: 15px;
+            }
+
+            .res-desc-box strong {
+                font-size: 0.95rem;
+            }
+
+            .result-actions {
+                gap: 10px !important;
+            }
+
+            .btn-pop {
+                padding: 10px 20px;
+                font-size: 0.95rem;
+                max-width: 220px;
+            }
+
+            .progress-container {
+                margin-bottom: 20px;
+            }
+        }
+
+        /* コンフェッティ（紙吹雪） */
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            border: 2px solid var(--main-color);
+            z-index: 100;
+            pointer-events: none;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(720deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="bg-kamon-container"></div>
+
+    <div id="main-wrapper">
+        <!-- スタート画面 -->
+        <div id="screen-start">
+            <img src="logo.png" alt="家アイコン診断" class="logo-img" id="title-logo">
+            <div class="subtitle">〜あなたの家族はどんなカタチ？〜</div>
+            <h1 class="subtitle">家アイコン診断</h1>
+
+            <button class="btn-pop" onclick="startQuiz()">診断スタート！</button>
+        </div>
+
+        <!-- クイズ画面 -->
+        <div id="screen-quiz" class="hide">
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div id="q-number" class="q-number">Q.1</div>
+            <div id="q-text" class="q-text"></div>
+            <div id="options" class="options"></div>
+        </div>
+
+        <!-- ローディング画面 -->
+        <div id="screen-loading" class="hide">
+            <div class="loading-spinner"></div>
+            <h2 style="color:var(--main-color); margin-top:20px; font-weight: 700;">診断中...</h2>
+            <p style="font-weight:bold; color: var(--main-color);">家族のカタチを紐解いています</p>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="screen-result" class="hide">
+            <h2 style="color: var(--main-color); margin-top: 0; font-size: 1.5rem; font-weight: 900;">あなたの家族の家アイコンは...
+            </h2>
+            <div class="result-kamon-box">
+                <img id="res-img" src="" alt="家アイコン">
+            </div>
+
+            <h2 class="res-name-pop" id="res-name"></h2>
+
+            <div class="res-desc-box" id="res-desc"></div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <button id="download-btn" class="btn-pop accent">📸 アイコンを保存する</button>
+                <div style="display: flex; gap: 10px; width: 100%; max-width: 280px; justify-content: center;">
+                    <button id="line-share-btn" class="btn-pop" style="background-color: #06C755; color: white; margin: 0; flex: 1; padding: 12px 10px; font-size: 1rem;">💬 LINE</button>
+                    <button id="x-share-btn" class="btn-pop" style="background-color: #000000; color: white; margin: 0; flex: 1; padding: 12px 10px; font-size: 1rem;">𝕏 ポスト</button>
+                </div>
+                <button class="btn-pop secondary" onclick="restartQuiz()">🔄 もう一度診断する</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Web Audio API を用いたポップな効果音機能 ---
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // ボタンを押した時の「ポンッ」という軽い音
+        function playPopSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            // ピッチが急激に下がることで「ポン」という音を作る
+            osc.frequency.setValueAtTime(600, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(t);
+            osc.stop(t + 0.1);
+        }
+
+        // ロード画面の「ピロリロリン✨」といった魔法のような音
+        function playLoadingSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+            // メジャーコードのアルペジオでワクワク感を出す
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+
+            notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, t + idx * 0.1);
+
+                gain.gain.setValueAtTime(0, t + idx * 0.1);
+                gain.gain.linearRampToValueAtTime(0.15, t + idx * 0.1 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + idx * 0.1 + 0.3);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(t + idx * 0.1);
+                osc.stop(t + idx * 0.1 + 0.3);
+            });
+        }
+
+        // 結果発表の「ジャジャーン！」という音
+        function playResultSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+            const chord = [523.25, 659.25, 783.99, 1046.50]; // Cメジャーコード
+
+            chord.forEach((freq) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, t);
+
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.2, t + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(t);
+                osc.stop(t + 1.5);
+            });
+        }
+
+        const types = ["enfj", "infj", "entj", "infp", "esfj", "estj", "entp", "esfp", "estp", "enfp", "istj", "intp", "intj", "isfp", "isfj", "istp"];
+        // ポップなカラーパレット（背景の家アイコン用）
+        const colors = ['#E63946', '#457B9D', '#A8DADC', '#2A9D8F', '#F72585', '#FFF3B0', '#FF9F1C'];
+        const shapes = ['●', '▲', '■', '✦', '✿']; // アイコン画像の代わりにポップな図形を使用
+
+        function initBg() {
+            const container = document.getElementById('bg-kamon-container');
+            container.innerHTML = ''; // reset
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const kamonCount = width < 600 ? 15 : 30; // 画面幅に応じて装飾の数を調整
+
+            const generatedPositions = [];
+
+            for (let i = 0; i < kamonCount; i++) {
+                const shape = document.createElement('div');
+                shape.className = 'bg-shape';
+
+                // 画像要素を作成して追加
+                const img = document.createElement('img');
+                const randomType = types[Math.floor(Math.random() * types.length)];
+                img.src = `${randomType}.png`;
+
+                // SVGではなく通常のフル不透明PNGに色をつける魔法のCSSハック
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                // アイコンのサイズに応じて投下距離（ハックの距離）を同期する
+                // モバイルの場合はアイコンを少し小さくする
+                const isMobile = width < 600;
+                const size = isMobile ? (40 + Math.random() * 40) : (60 + Math.random() * 80);
+                shape.style.width = `${size}px`;
+                shape.style.height = `${size}px`;
+
+                // 画像を上に飛ばす距離と、影を下に落とす距離を完璧に等しくする
+                img.style.transform = `translateY(-${size}px)`;
+                const shadow = `drop-shadow(0 ${size}px 0 ${randomColor})`;
+                img.style.filter = shadow;
+                img.style.webkitFilter = shadow; // iOS/Safari互換性向上
+
+                shape.appendChild(img);
+
+                // 3つ以上重ならないように位置を計算（簡易的な衝突判定＋リトライ）
+                let leftPercent, topPercent;
+                let overlapCount = 0;
+                let attempts = 0;
+                do {
+                    leftPercent = Math.random() * 100;
+                    topPercent = Math.random() * 100;
+                    overlapCount = 0;
+
+                    for (let pos of generatedPositions) {
+                        const dx = leftPercent - pos.x;
+                        const dy = topPercent - pos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        // もし画面幅に対するパーセンテージ上の距離が近ければ、重なっているとみなす（約10%未満）
+                        if (distance < 12) {
+                            overlapCount++;
+                        }
+                    }
+                    attempts++;
+                } while (overlapCount >= 2 && attempts < 20); // 3つ以上(overlapCount>=2)重なるようなら再計算。最大20回まで試す。
+
+                generatedPositions.push({ x: leftPercent, y: topPercent });
+
+                // ランダムな位置とサイズ、アニメーション
+                shape.style.left = `${leftPercent}%`;
+                shape.style.top = `${topPercent}%`;
+
+                // 背景になじむよう全体を薄く（前よりも数値を上げて色を濃く）
+                // 濃い色のご要望に合わせて透明度を下げてハッキリと見せる
+                shape.style.opacity = 0.6 + (Math.random() * 0.4);
+
+                shape.style.animationDuration = `${15 + Math.random() * 20}s`;
+                shape.style.animationDelay = `-${Math.random() * 20}s`;
+
+                container.appendChild(shape);
+            }
+        }
+        initBg();
+
+        const questions = [
+            { q: "おうちの中はどんな雰囲気？", a: [["いつも誰かが話していて、にぎやか！", "E"], ["それぞれのペースで、静かに過ごすことが多い", "I"]] },
+            { q: "家族で何かを決める時、大事にするのは？", a: [["「それが正しいか」「効率が良いか」", "T"], ["「みんながどう思うか」「平和に解決できるか」", "F"]] },
+            { q: "毎日の生活で当てはまるのは？", a: [["いつも通りのルーティンやルールを守るほう", "S"], ["新しいことや、変わったアイディアを試すほう", "N"]] },
+            { q: "お出かけや旅行の計画は？", a: [["しっかりスケジュールを立てて準備する！", "J"], ["その場の気分で、行き当たりばったり！", "P"]] },
+            { q: "家族以外の人との関わり方は？", a: [["友達や知り合いがたくさん家に遊びに来る！", "E"], ["本当に仲の良い人だけと、深く付き合う！", "I"]] },
+            { q: "家族での会話でよくあるのは？", a: [["今日あったことや、現実的な話題（お金や生活）", "S"], ["「もしも〜だったら」などの想像や、将来の夢", "N"]] },
+            { q: "家族の誰かが悩んでいる時、どうする？", a: [["原因を分析して、アドバイスをズバッと言う", "T"], ["まずは話を聞いて、気持ちに寄り添う", "F"]] },
+            { q: "おうちの片付けや整理整頓は？", a: [["元あった場所にちゃんと戻す！スッキリ派", "J"], ["ちょっと散らかってるくらいが落ち着く派", "P"]] }
+        ];
+
+        // 診断ロジック（MBTIベース）＋成り立ちの追加
+        const kamonIconData = {
+            "ENFJ": { name: "お祝いの家", desc: "<div><strong>【モチーフ】</strong>ケーキと囲む円<br><strong>【成り立ち】</strong>記念日を祝い、中心となって人々の幸せな輪を作る求心力。</div><div><strong>【家族のカタチ】</strong>記念日や誕生日を家族みんなで全力でお祝いする、温かい文化を持ったご家庭です。</div><div><strong>【特徴】</strong>みんなの気持ちに寄り添い、家族みんながハッピーでいられるように気配りできる優しい家族！</div><div><strong>【アドバイス】</strong>これからも「ありがとう」や「おめでとう」を言葉にして、たくさん笑顔を作ってね！</div>" },
+            "INFJ": { name: "星空見上げの家", desc: "<div><strong>【モチーフ】</strong>閉じた目<br><strong>【成り立ち】</strong>外界を遮断し、静かな時間の中で内面世界や真理を見つめる。</div><div><strong>【家族のカタチ】</strong>それぞれが静かな時間を大切にしながらも、深いところで強い絆で結ばれているご家庭。</div><div><strong>【特徴】</strong>言葉にしなくてもお互いの気持ちがわかる、不思議な以心伝心ができる家族！</div><div><strong>【アドバイス】</strong>たまには「実はあの時、こう思ってたんだ」と、深い話をする時間を作るとさらに絆が深まるよ。</div>" },
+            "ENTJ": { name: "未来設計の家", desc: "<div><strong>【モチーフ】</strong>電源と垂直線<br><strong>【成り立ち】</strong>分単位で時間を管理し、目標へ突き進む圧倒的な直進性。</div><div><strong>【家族のカタチ】</strong>みんなで目標に向かって進むのが楽しい、「家族会議」が盛り上がるチームのようなご家庭。</div><div><strong>【特徴】</strong>「来年の夏休みはどこ行く？」など、計画を立てて実行する行動力バツグンの家族！</div><div><strong>【アドバイス】</strong>目標達成も大事だけど、たまには無計画にリラックスする「何もしない日」を作るのもオススメ！</div>" },
+            "INFP": { name: "秘密基地の家", desc: "<div><strong>【モチーフ】</strong>思い出の手紙<br><strong>【成り立ち】</strong>大切な記憶や感受性を、誰にも邪魔されないよう慈しみ守る。</div><div><strong>【家族のカタチ】</strong>家族それぞれの「好き」や個性を尊重し合う、自由で想像力豊かなご家庭。</div><div><strong>【特徴】</strong>独自のルールや、家族にしかわからない冗談がある、個性的でマイペースな家族！</div><div><strong>【アドバイス】</strong>お互いの趣味や好きなことをシェアする時間を作ると、新しい発見があって楽しいよ！</div>" },
+            "ESFJ": { name: "ポカポカ食卓の家", desc: "<div><strong>【モチーフ】</strong>お椀と手合わせ<br><strong>【成り立ち】</strong>食卓を囲み、感謝と食事を通じて家族の絆を繋ぐ慈愛。</div><div><strong>【家族のカタチ】</strong>週末はみんなで美味しいものを食べたり、協力して家事をしたりする、安定感のあるご家庭。</div><div><strong>【特徴】</strong>伝統の味や、決まったルーティンを大切にする、安心感としあわせがいっぱいの家族！</div><div><strong>【アドバイス】</strong>時にはお休みの日を作って、みんなで外食やデリバリーを頼んで家事をお休みしてみては？</div>" },
+            "ESTJ": { name: "タイムキーパーの家", desc: "<div><strong>【モチーフ】</strong>チェックと分割<br><strong>【成り立ち】</strong>役割分担を明確にし、組織を効率的に回す管理能力。</div><div><strong>【家族のカタチ】</strong>ルールや約束をしっかり守り、整理整頓が得意な、とても自立したご家庭。</div><div><strong>【特徴】</strong>役割分担がバッチリで、生活リズムが整っている、お手本のようなしっかり者家族！</div><div><strong>【アドバイス】</strong>予定が崩れたときも「まあいっか」と笑える心の余裕を持つと、さらにギスギスしなくなるよ。</div>" },
+            "ENTP": { name: "ひらめき発明の家", desc: "<div><strong>【モチーフ】</strong>波打つメモ<br><strong>【成り立ち】</strong>枠に収まらず、家のあちこちで湧き出すアイデアの躍動感。</div><div><strong>【家族のカタチ】</strong>新しい家電を試したり、面白い遊びを考えたりするのが大好きなご家庭。</div><div><strong>【特徴】</strong>「これやってみよう！」という思いつきがいっぱいで、毎日が刺激に満ちている家族！</div><div><strong>【アドバイス】</strong>思いつきだけでなく、最後までやり遂げた人を思いっきり褒め合うルールを作ると◎。</div>" },
+            "ESFP": { name: "エンターテイナーの家", desc: "<div><strong>【モチーフ】</strong>テレビと集まる人々<br><strong>【成り立ち】</strong>リビングに集まり、娯楽を通じて「今」を全力で楽しむ社交性。</div><div><strong>【家族のカタチ】</strong>とにかく明るく、笑い声が絶えない、イベント大好きなご家庭。</div><div><strong>【特徴】</strong>突然のカラオケ大会や、急なお出かけなど、その場のノリを全力で楽しめる家族！</div><div><strong>【アドバイス】</strong>たまには「今日は1歩も家から出ないでダラダラするDAY」を満喫して、エネルギーをチャージして。</div>" },
+            "ESTP": { name: "アクティブ冒険の家", desc: "<div><strong>【モチーフ】</strong>自動車の疾走<br><strong>【成り立ち】</strong>週末のドライブのように、刺激と自由を求めて加速する行動力。</div><div><strong>【家族のカタチ】</strong>アウトドアやスポーツ、体を動かすことが大好きな、エネルギーあふれるご家庭。</div><div><strong>【特徴】</strong>失敗を恐れず、色々なことにみんなでチャレンジする、フットワークの軽い家族！</div><div><strong>【アドバイス】</strong>一緒に「のんびり映画を見る時間」なども意識して作ると、メリハリがついてGOOD！</div>" },
+            "ENFP": { name: "自由な風の家", desc: "<div><strong>【モチーフ】</strong>散らばった円<br><strong>【成り立ち】</strong>作りかけを厭わず、新しいワクワクへ飛び出す自由な精神。</div><div><strong>【家族のカタチ】</strong>好奇心旺盛で、色々な話題が次々に飛び出す、まるでカフェのようなご家庭。</div><div><strong>【特徴】</strong>誰かの「やりたい！」にみんなが乗っかる、夢と希望に溢れたポジティブ家族！</div><div><strong>【アドバイス】</strong>やりかけのことが増えすぎないよう、週末に「先週の片付け・振り返り」をするとスッキリするよ。</div>" },
+            "ISTJ": { name: "頼れる大黒柱の家", desc: "<div><strong>【モチーフ】</strong>二重枠の書類<br><strong>【成り立ち】</strong>説明書を読み込み、手順とルールを厳格に守る誠実さ。</div><div><strong>【家族のカタチ】</strong>静かで落ち着いていて、いざという時にとても頼りになる、安定感抜群のご家庭。</div><div><strong>【特徴】</strong>「これをやっておけば大丈夫」という安心のベースがあり、地に足がついている家族！</div><div><strong>【アドバイス】</strong>たまには「いつもの」ではなく、全く初めてのことにみんなで挑戦してみるのも新鮮だよ！</div>" },
+            "INTP": { name: "知恵袋の家", desc: "<div><strong>【モチーフ】</strong>四分割された趣味<br><strong>【成り立ち】</strong>自室で多岐にわたる知的好奇心に没頭する宇宙を内包。</div><div><strong>【家族のカタチ】</strong>図鑑や本が好きだったり、なぜだろう？を一緒に考えたりする、知的なご家庭。</div><div><strong>【特徴】</strong>それぞれが自分の興味にとことん没頭しつつ、教え合うのが好きな研究者気質の家族！</div><div><strong>【アドバイス】</strong>論理的な話だけでなく、「今日楽しかったこと」「美味しかったもの」など感情のシェアもしてみて！</div>" },
+            "INTJ": { name: "戦略室の家", desc: "<div><strong>【モチーフ】</strong>格子と中心の円<br><strong>【成り立ち】</strong>膨大な情報を整理し、最短で本質を見つけ出す思考を表現。</div><div><strong>【家族のカタチ】</strong>静かな空間を好み、それぞれが自分の目標に向かって効率よく動くご家庭。</div><div><strong>【特徴】</strong>お互いの邪魔をせず、プロフェッショナルのように自立して生活しているカッコいい家族！</div><div><strong>【アドバイス】</strong>たまには効率や意味を全く考えない、無駄を楽しむ「おバカ時間」を意識的に作って！</div>" },
+            "ISFP": { name: "アトリエの家", desc: "<div><strong>【モチーフ】</strong>自然の造形（※仮称）<br><strong>【成り立ち】</strong>葉の重なりや繊細な曲線で、言葉を超えた芸術的な愛情と美しさを表現。</div><div><strong>【家族のカタチ】</strong>DIYや料理、手芸など、何かを作ることや美しいものが大好きなご家庭。</div><div><strong>【特徴】</strong>穏やかで、言葉よりも態度や作ったもので愛情を表現し合う、やさしい芸術家家族！</div><div><strong>【アドバイス】</strong>「作ってくれてありがとう」など、言葉に出して感謝を伝えるともう一歩絆が深まります。</div>" },
+            "ISFJ": { name: "ぬくもり毛布の家", desc: "<div><strong>【モチーフ】</strong>ほうきと守護の形<br><strong>【成り立ち】</strong>毎週の掃除を欠かさず、日常の平穏を献身的に守り続ける。</div><div><strong>【家族のカタチ】</strong>誰かが困っていたら絶対に見捨てない、支え合いと優しさに満ちたご家庭。</div><div><strong>【特徴】</strong>家族の誕生日や記念日をずっと覚えていて、お互いを大切にケアし合う思いやり家族！</div><div><strong>【アドバイス】</strong>「家族のため」だけでなく、「自分専用のご褒美時間」をそれぞれしっかり確保してね。</div>" },
+            "ISTP": { name: "マイペースDIYの家", desc: "<div><strong>【モチーフ】</strong>工具と六角形<br><strong>【成り立ち】</strong>仕組みを理解し、壊れたものを自らの手で直す技術と合理性。</div><div><strong>【家族のカタチ】</strong>口数は少ないけれど、困った時は「俺・私に任せろ！」とサッと解決するご家庭。</div><div><strong>【特徴】</strong>ベタベタしないクールな関係性の中に、いざという時の強い信頼がある職人家族！</div><div><strong>【アドバイス】</strong>みんなで1つのゲームをしたり、共同作業をしたりする時間を作ると、意外な一面が見れるかも！</div>" },
+        };
+
+        let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+        let currentIdx = 0;
+
+        function startQuiz() {
+            playPopSound(); // 音を鳴らす
+            document.getElementById("screen-start").classList.add("hide");
+            document.getElementById("screen-quiz").classList.remove("hide");
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentIdx];
+            document.getElementById("q-number").innerText = `Q.${currentIdx + 1} / ${questions.length}`;
+            document.getElementById("progress-bar").style.width = `${((currentIdx) / questions.length) * 100}%`;
+
+            const qText = document.getElementById("q-text");
+            qText.innerText = q.q;
+            qText.style.animation = 'none';
+            qText.offsetHeight; // trigger reflow
+            qText.style.animation = 'popIn 0.3s forwards';
+
+            const optCont = document.getElementById("options");
+            optCont.innerHTML = "";
+
+            q.a.forEach((ans, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "btn-option";
+                btn.style.opacity = "0";
+                btn.style.transform = "translate(20px, 20px)";
+                btn.style.animation = `popIn 0.3s forwards ${idx * 0.15}s`;
+                btn.innerText = ans[0];
+                btn.onclick = () => handleAnswer(ans[1]);
+                optCont.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(type) {
+            playPopSound(); // 選択時のポンッという音
+            scores[type]++;
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                showQuestion();
+            } else {
+                document.getElementById("progress-bar").style.width = "100%";
+                setTimeout(showLoading, 400);
+            }
+        }
+
+        function showLoading() {
+            playLoadingSound(); // ロード時のピロリロリンという音
+            document.getElementById("screen-quiz").classList.add("hide");
+            document.getElementById("screen-loading").classList.remove("hide");
+            setTimeout(showResult, 2500);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 70; i++) {
+                const conf = document.createElement("div");
+                conf.className = "confetti";
+                conf.style.left = `${Math.random() * 100}vw`;
+                conf.style.top = `-10vh`;
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = `${Math.random() * 2 + 2}s`;
+                conf.style.animationDelay = `${Math.random() * 1.5}s`;
+
+                if (Math.random() > 0.5) conf.style.borderRadius = "50%";
+
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 5000);
+            }
+        }
+
+        function showResult() {
+            playResultSound(); // 結果発表のジャジャーンという音
+            document.getElementById("screen-loading").classList.add("hide");
+            document.getElementById("screen-result").classList.remove("hide");
+
+            setTimeout(createConfetti, 100);
+
+            const typeStr = (scores.E >= scores.I ? "E" : "I") +
+                (scores.S >= scores.N ? "S" : "N") +
+                (scores.T >= scores.F ? "T" : "F") +
+                (scores.J >= scores.P ? "J" : "P");
+
+            const data = kamonIconData[typeStr] || kamonIconData["ENFJ"];
+            const imgPath = typeStr.toLowerCase() + ".png";
+
+            document.getElementById("res-img").src = imgPath;
+            document.getElementById("res-name").innerText = data.name;
+            document.getElementById("res-desc").innerHTML = data.desc;
+
+            const downloadBtn = document.getElementById("download-btn");
+            downloadBtn.onclick = () => {
+                // Canvasを使うとローカル環境でセキュリティエラー（Tainted Canvas）になる可能性があるため、
+                // 最もシンプルで確実なリンク（aタグ）によるダウンロード処理に変更します。
+                const link = document.createElement("a");
+                link.href = imgPath;
+                link.download = `家族の家アイコン_${data.name}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const lineBtn = document.getElementById("line-share-btn");
+            lineBtn.onclick = () => {
+                const text = encodeURIComponent(`私の家族の家アイコンは【${data.name}】でした！\n\nあなたも家アイコン診断をやってみよう！\nhttps://houseicon-shindan.vercel.app/`);
+                window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
+            };
+
+            const xBtn = document.getElementById("x-share-btn");
+            xBtn.onclick = () => {
+                const text = encodeURIComponent(`私の家族の家アイコンは【${data.name}】でした！\nあなたも家族のカタチを診断してみよう！\n\n#家アイコン診断`);
+                const url = encodeURIComponent(`https://houseicon-shindan.vercel.app/`);
+                window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+            };
+        }
+
+        function restartQuiz() {
+            playPopSound();
+            // スコアとインデックスをリセット
+            scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            currentIdx = 0;
+            // 画面を切り替え
+            document.getElementById("screen-result").classList.add("hide");
+            document.getElementById("screen-start").classList.remove("hide");
+            // 背景を再初期化（念のため）
+            initBg();
+        }
+    </script>
+</body>
+
+</html>
